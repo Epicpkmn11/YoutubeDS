@@ -173,7 +173,7 @@ ITCM_CODE void PlayVideo()
 	mVideoHeader = (uint8_t*)malloc(SWAP_CONSTANT_32(header_size));
 	mRingBufferHttpStream->Read(mVideoHeader + 4, SWAP_CONSTANT_32(header_size) - 4);
 #else
-	FILE* video = fopen(browseForFile().c_str(), "rb");
+	FILE* video = fopen(browseForFile({"mp4"}).c_str(), "rb");
 
 	// Clear the screen
 	printf("\x1b[2J");
@@ -311,7 +311,7 @@ ITCM_CODE void PlayVideo()
 	memset(&mMVecCache[0], 0, sizeof(mMVecCache));
 	videoSetMode(MODE_5_2D);
 	//vramSetBankE(VRAM_E_MAIN_BG);
-	dmaFillWords(0, (void*)0x06000000, 256 * 192 * 2);
+	dmaFillWords(0, BG_GFX, 256 * 192 * 2);
 	vramSetBankC(VRAM_C_LCD);
 	dmaFillWords(0x80008000, (void*)VRAM_C, 256 * 144 * 2);
 	vramSetBankC(VRAM_C_MAIN_BG_0x06000000);
@@ -612,7 +612,7 @@ int main()
 	videoSetModeSub(MODE_0_2D);
 	vramSetBankH(VRAM_H_SUB_BG);
 
-	consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 2, 0, false, true);
+	// consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 2, 0, false, true);
 	//if(nitroFSInit(NULL))
 	//	printf("NitroFS works\n");
 	keysSetRepeat(25, 5);
