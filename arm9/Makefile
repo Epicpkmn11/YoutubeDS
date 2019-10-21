@@ -15,10 +15,10 @@ include $(DEVKITARM)/ds_rules
 # all directories are relative to this makefile
 #---------------------------------------------------------------------------------
 BUILD		:=	build
-SOURCES		:=	source source/aac source/aac/asm/armgcc source/happyhttp source/gui source/mpeg4
-INCLUDES	:=	include source source/aac source/aac_pub source/happyhttp source/rapidjson source/jpeg source/gui source/mpeg4 ../common
+SOURCES		:=	source source/aac source/gui source/mpeg4 source/utils source/video
+INCLUDES	:=	source source/aac source/aac_pub source/gui source/mpeg4 source/utils source/video ../common
 DATA		:=	data
-GRAPHICS	:=  gfx
+GRAPHICS	:=	gfx
 
 
 #---------------------------------------------------------------------------------
@@ -87,8 +87,8 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 					$(PNGFILES:.png=.o) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
  
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
+					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+					-I$(CURDIR)/$(BUILD)
  
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
  
