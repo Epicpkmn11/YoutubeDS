@@ -17,7 +17,7 @@ include $(DEVKITARM)/ds_rules
 BUILD		:=	build
 SOURCES		:=	source source/aac source/aac/asm/armgcc source/happyhttp source/gui source/mpeg4
 INCLUDES	:=	include source source/aac source/aac_pub source/happyhttp source/rapidjson source/jpeg source/gui source/mpeg4 ../common
-DATA		:=
+DATA		:=	data
 
 
 #---------------------------------------------------------------------------------
@@ -115,10 +115,11 @@ $(ARM9ELF)	:	$(OFILES)
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data 
 #---------------------------------------------------------------------------------
-%.bin.o	:	%.bin
+%.nftr.o	:	%.nftr
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@$(bin2o)
+	arm-none-eabi-objcopy --rename-section .rodata=.vram $(@)
 
 -include $(DEPSDIR)/*.d
  

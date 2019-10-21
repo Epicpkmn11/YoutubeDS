@@ -4,6 +4,7 @@
 
 #include "aacShared.h"
 #include "fileBrowse.h"
+#include "graphics.h"
 #include "lock.h"
 #include "mpu.h"
 #include "mpeg4.h"
@@ -182,14 +183,15 @@ ITCM_CODE void PlayVideo()
 	mVideoHeader = (uint8_t*)malloc(SWAP_CONSTANT_32(header_size));
 	mRingBufferHttpStream->Read(mVideoHeader + 4, SWAP_CONSTANT_32(header_size) - 4);
 #else
-	std::string fileName = browseForFile();
+	std::string fileName = browseForFile({"mp4"});
 	FILE* video = fopen(fileName.c_str(), "rb");
 
 	// Clear the screen
 	printf("\x1b[2J");
+	drawRectangle(0, 0, 256, 192, 0, false);
 
-	// Print base progress bar
-	printf("[------------------------------]\n");
+	// Draw progress bar background
+	drawRectangle(35, 6, 185, 7, 4, false);
 
 	printf("Opened file: %p\n", video);
 	//find the moov atom
@@ -286,7 +288,10 @@ ITCM_CODE void PlayVideo()
 					ptr += 8;	//skip stsz
 					ptr += 8;
 					nrframes = READ_SAFE_UINT32_BE(ptr);
-					printf("\x1b[1;26H/%.02d:%.02d\n", nrframes/(mTimeScale/1000)/60, (nrframes/(mTimeScale/1000))-((nrframes/(mTimeScale/1000)/60)*60));
+					char time[14];
+					snprintf(time, sizeof(time), "%.02ld:%.02ld", nrframes/(timescale/1000)/60, (nrframes/(timescale/1000))-((nrframes/(timescale/1000)/60)*60));
+					drawRectangle(223, 1, 33, 16, 0, false);
+					printText(time, 1, 1, 1, 223, 1, false);
 					ptr += 4;
 					framesizes = ptr;
 					ptr += nrframes * 4;
@@ -572,10 +577,16 @@ static bool mUseVramB = false;
 static bool mCopyDone = false;
 
 ITCM_CODE void VBlankProc()
-{
+{	
 	if(isVideoPlaying)//stride dma and frame copy
 	{
 		if(!pauseVideo) {
+			// Update time & progress
+			drawRectangle(36, 7, (int)(((float)frame/nrframes)*184), 5, 3, false);
+			char time[14];
+			snprintf(time, sizeof(time), "%.02d:%.02d", frame/(mTimeScale/1000)/60, (frame/(mTimeScale/1000))-((frame/(mTimeScale/1000)/60)*60));
+			drawRectangle(3, 1, 30, 16, 0, false);
+			printText(time, 1, 1, 1, 3, 1, false);
 
 			if(mCopyDone)
 			{
@@ -623,9 +634,6 @@ ITCM_CODE void VBlankProc()
 			}
 		}
 
-		printf("\x1b[0;%dH#\n", (int)(((float)frame/nrframes)*30)+1);
-		printf("\x1b[1;21H%.02d:%.02d\n", frame/(mTimeScale/1000)/60, (frame/(mTimeScale/1000))-((frame/(mTimeScale/1000)/60)*60));
-
 		scanKeys();
 		u16 pressed = keysDown();
 		if(pressed & KEY_A) {
@@ -657,7 +665,9 @@ int main()
 	videoSetModeSub(MODE_0_2D);
 	vramSetBankH(VRAM_H_SUB_BG);
 
-	consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 2, 0, false, true);
+	loadFont();
+
+	// consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 2, 0, false, true);
 	//if(nitroFSInit(NULL))
 	//	printf("NitroFS works\n");
 	keysSetRepeat(25, 5);
