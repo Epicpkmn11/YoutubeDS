@@ -126,33 +126,36 @@ void showDirectoryContents(const std::vector<DirEntry>& dirContents, const std::
 
 	// Print path
 	drawImageSection(0, 0, 256, 17, fileBrowseBgBitmap, 256, 0, 0, 16);
-	printTextMaxW(path, 250, 1, 0, 5, 0);
+	printTextMaxW(path, 250, 1, 0, 3, 0);
 
 	// Print directory listing
 	for(int i=0;i < ENTRIES_PER_SCREEN; i++) {
 		// Clear row
-		drawImageSection(10, i*16+16, 246, 16, fileBrowseBgBitmap, 256, 10, i*16+16, 16);
+		drawImageSection(0, i*16+16, 256, 16, fileBrowseBgBitmap, 256, 0, i*16+16, 16);
 
 		if(i < ((int)dirContents.size() - startRow)) {
-			std::u16string name = UTF8toUTF16(dirContents[startRow+i].name);
+			const DirEntry *entry = &dirContents.at(startRow+i);
+			std::u16string name = UTF8toUTF16(entry->name);
 
 			// Trim to fit on screen
 			bool addEllipsis = false;
-			while(getTextWidth(name) > 227) {
+			while(getTextWidth(name) > 240) {
 				name = name.substr(0, name.length()-1);
 				addEllipsis = true;
 			}
 			if(addEllipsis)	name += UTF8toUTF16("...");
 
 			bool watched = false;
-			for(unsigned int j=0;j<watchedList.size();j++) {
-				if(watchedList[j] == dirContents[startRow+i].name) {
-					watched = true;
-					break;
+			if(!entry->isDirectory) {
+				for(unsigned int j=0;j<watchedList.size();j++) {
+					if(watchedList[j] == entry->name) {
+						watched = true;
+						break;
+					}
 				}
 			}
 
-			printText(name, 1, 1, !(startRow+i == selection) + (watched*2), 10, i*16+16);
+			printText(name, 1, 1, !(startRow+i == selection) + (watched*2), 3, i*16+16);
 		}
 	}
 }
@@ -179,7 +182,7 @@ std::string browseForFile(const std::vector<std::string>& extensionList) {
 			scanKeys();
 			pressed = keysDown();
 			held = keysDownRepeat();
-		} while(!((held & (KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT) || (pressed & (KEY_A | KEY_B | KEY_Y)))));
+		} while(!((held & (KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT) || (pressed & (KEY_A | KEY_B | KEY_Y | KEY_TOUCH)))));
 
 		if(held & KEY_UP) {
 			fileOffset -= 1;

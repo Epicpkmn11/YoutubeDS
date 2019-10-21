@@ -118,7 +118,7 @@ void StartTimer(int timescale)
 		timerStart(0, ClockDivider_1024, -546 / (mDoubleSpeedEnabled + 1), frameHandler);
 	else if(timescale == 999)
 		timerStart(0, ClockDivider_1024, -3276 / (mDoubleSpeedEnabled + 1), frameHandler);
-	else 
+	else
 		timerStart(0, ClockDivider_1024, TIMER_FREQ_1024(10) / (mDoubleSpeedEnabled + 1), frameHandler);
 }
 
@@ -205,7 +205,7 @@ ITCM_CODE void PlayVideo()
 		printf("atom: %lx\n", SWAP_CONSTANT_32(atom));
 		if(atom == 0x766F6F6D)
 		{
-			fseek(video, -8, SEEK_CUR);			
+			fseek(video, -8, SEEK_CUR);
 			mVideoHeader = (uint8_t*)malloc(SWAP_CONSTANT_32(size));
 			fread(mVideoHeader, 1, SWAP_CONSTANT_32(size), video);
 			break;
@@ -229,7 +229,7 @@ ITCM_CODE void PlayVideo()
 
 	//find the header data we need
 	uint8_t* pHeader = mVideoHeader;
-	u32 moovSize = READ_SAFE_UINT32_BE(pHeader);	
+	u32 moovSize = READ_SAFE_UINT32_BE(pHeader);
 	printf("moovSize: %lx\n", moovSize);
 	uint8_t* pHeaderEnd = pHeader + moovSize;
 	pHeader += 8;	//skip moov header
@@ -261,7 +261,7 @@ ITCM_CODE void PlayVideo()
 				ptr += READ_SAFE_UINT32_BE(ptr);//skip tkhd
 				while(READ_SAFE_UINT32_BE(ptr + 4) != 0x6D646961)//mdia
 					ptr += READ_SAFE_UINT32_BE(ptr);
-				
+
 				if(trackId == 1)
 				{
 					ptr += 8;	//skip mdia
@@ -324,11 +324,11 @@ ITCM_CODE void PlayVideo()
 	mpeg4DecStruct.height = sVideoHeight;
 
 	uint32_t offset = READ_SAFE_UINT32_BE(videoBlockOffsets);
-	uint32_t nextAudioBlockOffset = READ_SAFE_UINT32_BE(audioBlockOffsets);	
+	uint32_t nextAudioBlockOffset = READ_SAFE_UINT32_BE(audioBlockOffsets);
 	audioBlockOffsets += 4;
 	if(nextAudioBlockOffset < offset)
 		offset = nextAudioBlockOffset;
-	else		
+	else
 		videoBlockOffsets += 4;
 #ifdef USE_WIFI
 	mRingBufferHttpStream->Read(NULL, offset - mRingBufferHttpStream->GetStreamPosition());
@@ -371,7 +371,7 @@ ITCM_CODE void PlayVideo()
 	else
 		REG_BLDCNT = 0;
 
-	
+
 
 	aac_initQueue();
 #ifdef AAC_ARM7
@@ -402,8 +402,8 @@ ITCM_CODE void PlayVideo()
 		{
 			offset = READ_SAFE_UINT32_BE(videoBlockOffsets);
 			int audiosize = offset - nextAudioBlockOffset;
-			videoBlockOffsets += 4;		
-			
+			videoBlockOffsets += 4;
+
 #ifdef AAC_ARM7
 			while(sAACQueueUncached->blockCount == AAC_QUEUE_BLOCK_COUNT);
 			fread(&sAACQueue.queue[sAACQueueUncached->writeBlock][0], 1, audiosize, video);
@@ -424,10 +424,10 @@ ITCM_CODE void PlayVideo()
 			while(audiosize > 0)
 			{
 				int err = 0;
-				if((err = AACDecode(aacDec, &audioDataptr, &audiosize, &mWaveData[mWaveDataOffs_write * AUDIO_BLOCK_SIZE])) < 0) 
+				if((err = AACDecode(aacDec, &audioDataptr, &audiosize, &mWaveData[mWaveDataOffs_write * AUDIO_BLOCK_SIZE])) < 0)
 				{
 					break;
-				}				
+				}
 				DC_FlushRange(&mWaveData[mWaveDataOffs_write * AUDIO_BLOCK_SIZE], AUDIO_BLOCK_SIZE * 2);
 				mWaveDataOffs_write = (mWaveDataOffs_write + 1) % NR_WAVE_DATA_BUFFERS;
 			}
@@ -511,7 +511,7 @@ ITCM_CODE void PlayVideo()
 			while(audiosize > 0)
 			{
 				int err = 0;
-				if((err = AACDecode(aacDec, &audioDataptr, &audiosize, &mWaveData[mWaveDataOffs_write * AUDIO_BLOCK_SIZE])) < 0) 
+				if((err = AACDecode(aacDec, &audioDataptr, &audiosize, &mWaveData[mWaveDataOffs_write * AUDIO_BLOCK_SIZE])) < 0)
 				{
 					break;
 				}
@@ -579,7 +579,7 @@ static bool mUseVramB = false;
 static bool mCopyDone = false;
 
 ITCM_CODE void VBlankProc()
-{	
+{
 	if(isVideoPlaying)//stride dma and frame copy
 	{
 		if(!pauseVideo)
@@ -611,7 +611,7 @@ ITCM_CODE void VBlankProc()
 					else if(sVideoWidth == 256)
 						yog2rgb_convert256(&mYBuffer[firstQueueBlock][0], &mUVBuffer[firstQueueBlock][0], addr);
 					else
-						yog2rgb_convert176(&mYBuffer[firstQueueBlock][0], &mUVBuffer[firstQueueBlock][0], addr);				
+						yog2rgb_convert176(&mYBuffer[firstQueueBlock][0], &mUVBuffer[firstQueueBlock][0], addr);
 					// if(sVideoWidth == 256)
 					// 	y2r_convert256(&mYBuffer[firstQueueBlock][0], &mUVBuffer[firstQueueBlock][0], (u16*)addr);
 					// else
@@ -643,7 +643,7 @@ ITCM_CODE void VBlankProc()
 		u16 pressed = keysDown();
 		if(pressed & KEY_A) {
 			pauseVideo = !pauseVideo;
-			// if(pauseVideo)	
+			// if(pauseVideo)
 			aac_pauseDecArm7();
 			// else {
 			// 	aac_startDecArm7(audioRate);
@@ -816,10 +816,10 @@ idle_loop:
 #endif
 /*#ifdef USE_WIFI
 	consoleDemoInit();
-	if(!Wifi_InitDefault(WFC_CONNECT)) 
+	if(!Wifi_InitDefault(WFC_CONNECT))
 	{
 		printf("Failed to connect!");
-	} 
+	}
 	printf("Connected\n\n");
 	swiWaitForVBlank();
 	swiWaitForVBlank();
