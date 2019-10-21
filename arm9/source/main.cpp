@@ -16,7 +16,7 @@
 
 #define AAC_ARM7
 
-#define VIDEO_HEIGHT	144
+#define VIDEO_HEIGHT	192
 
 #define TMP_BUFFER_SIZE		(64 * 1024)
 
@@ -85,7 +85,7 @@ static int mDoubleSpeedEnabled = 0;
 
 static int nrframes, frame;
 
-#define FRAME_SIZE	(256 * VIDEO_HEIGHT)//(176 * 144)
+#define FRAME_SIZE	(256 * 192)//(176 * 144)
 //static uint16_t mFrameQueue[FRAME_SIZE * NR_FRAME_BLOCKS] __attribute__ ((aligned (32)));
 
 static volatile int mShouldCopyFrame;
@@ -191,7 +191,7 @@ ITCM_CODE void PlayVideo()
 	drawRectangle(0, 0, 256, 192, 0, false);
 
 	// Draw progress bar background
-	drawRectangle(35, 6, 185, 7, 4, false);
+	drawRectangle(35, 6, 185, 7, 5, false);
 
 	printf("Opened file: %p\n", video);
 	//find the moov atom
@@ -216,7 +216,6 @@ ITCM_CODE void PlayVideo()
 #endif
 	memset(&mpeg4DecStruct, 0, sizeof(mpeg4DecStruct));
 	mpeg4DecStruct.pData = &mVideoTmpBuffer[0];
-	mpeg4DecStruct.height = VIDEO_HEIGHT;
 	mpeg4DecStruct.pDstY = &mYBuffer[0][0];
 	mpeg4DecStruct.pDstUV = &mUVBuffer[0][0];
 	mpeg4DecStruct.pIntraDCTVLCTable = &mpeg4_table_b16[0];
@@ -322,6 +321,7 @@ ITCM_CODE void PlayVideo()
 	}
 
 	mpeg4DecStruct.width = sVideoWidth;
+	mpeg4DecStruct.height = sVideoHeight;
 
 	uint32_t offset = READ_SAFE_UINT32_BE(videoBlockOffsets);
 	uint32_t nextAudioBlockOffset = READ_SAFE_UINT32_BE(audioBlockOffsets);	
@@ -341,6 +341,8 @@ ITCM_CODE void PlayVideo()
 	//vramSetBankE(VRAM_E_MAIN_BG);
 	dmaFillWords(0, (void*)0x06000000, 256 * 192 * 2);
 	vramSetBankC(VRAM_C_LCD);
+	dmaFillWords(0x80008000, (void*)VRAM_A, 256 * VIDEO_HEIGHT * 2);
+	dmaFillWords(0x80008000, (void*)VRAM_B, 256 * VIDEO_HEIGHT * 2);
 	dmaFillWords(0x80008000, (void*)VRAM_C, 256 * VIDEO_HEIGHT * 2);
 	vramSetBankC(VRAM_C_MAIN_BG_0x06000000);
 	bgInit(2, BgType_Bmp8, BgSize_B16_256x256, 0,0);
@@ -353,7 +355,7 @@ ITCM_CODE void PlayVideo()
 	REG_BG2PC = 0;
 	REG_BG2PD = sVideoWidthScale;
 	REG_BG2X = 80;
-	REG_BG2Y = -(int)((192-144*(256/(float)sVideoWidthScale))/2) << 8;
+	REG_BG2Y = -(int)((192-sVideoHeight*(256/(float)sVideoWidthScale))/2) << 8;
 
 	if(mpeg4DecStruct.width != 256)
 	{
@@ -362,7 +364,7 @@ ITCM_CODE void PlayVideo()
 		REG_BG3PC = 0;
 		REG_BG3PD = sVideoWidthScale;
 		REG_BG3X = 80;
-		REG_BG3Y = -(int)((192-144*(256/(float)sVideoWidthScale))/2) << 8;
+		REG_BG3Y = -(int)((192-sVideoHeight*(256/(float)sVideoWidthScale))/2) << 8;
 		REG_BLDCNT = BLEND_ALPHA | BLEND_SRC_BG2 | BLEND_SRC_BG3 | BLEND_DST_BG2 | BLEND_DST_BG3 | BLEND_DST_BACKDROP;
 		REG_BLDALPHA = 8 | (8 << 8);
 	}
@@ -582,7 +584,7 @@ ITCM_CODE void VBlankProc()
 	{
 		if(!pauseVideo) {
 			// Update time & progress
-			drawRectangle(36, 7, (int)(((float)frame/nrframes)*184), 5, 3, false);
+			drawRectangle(36, 7, (int)(((float)frame/nrframes)*184), 5, 4, false);
 			char time[14];
 			snprintf(time, sizeof(time), "%.02d:%.02d", frame/(mTimeScale/1000)/60, (frame/(mTimeScale/1000))-((frame/(mTimeScale/1000)/60)*60));
 			drawRectangle(3, 1, 30, 16, 0, false);
@@ -610,7 +612,9 @@ ITCM_CODE void VBlankProc()
 				{
 					u16* addr = mUseVramB ? VRAM_B : VRAM_A;
 					//cpuStartTiming(1);
-					if(sVideoWidth == 256)
+					if(sVideoHeight == 192)
+						yog2rgb_convert192(&mYBuffer[firstQueueBlock][0], &mUVBuffer[firstQueueBlock][0], addr);
+					else if(sVideoWidth == 256)
 						yog2rgb_convert256(&mYBuffer[firstQueueBlock][0], &mUVBuffer[firstQueueBlock][0], addr);
 					else
 						yog2rgb_convert176(&mYBuffer[firstQueueBlock][0], &mUVBuffer[firstQueueBlock][0], addr);				
@@ -662,6 +666,7 @@ int main()
 		nitroFSInit(NULL);
 	//defaultExceptionHandler();
 	//consoleDemoInit();
+	videoSetMode(MODE_0_2D);
 	videoSetModeSub(MODE_0_2D);
 	vramSetBankH(VRAM_H_SUB_BG);
 
