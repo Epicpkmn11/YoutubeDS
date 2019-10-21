@@ -24,7 +24,7 @@ static constexpr u16 palettes[16][2] {
 	{0x443D, 0x507F},	// 15: fuschia
 };
 
-void initGraphics(void);
+void loadPalettes(void);
 void loadFont(void);
 
 void drawImage(int x, int y, int w, int h, const unsigned char *imageBuffer, int startPal = 0);

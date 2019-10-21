@@ -11,16 +11,7 @@ std::vector<u8> fontWidths;
 std::vector<u16> fontMap;
 u16 tileSize, tileWidth, tileHeight;
 
-void initGraphics(void) {
-	// Initialize video mode
-	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-
-	// initialize all the VRAM banks
-	vramSetBankC(VRAM_C_SUB_BG);
-
-	// Init for background
-	bgInitSub(3, BgType_Bmp8, BgSize_B8_256x256, 0, 0);
-
+void loadPalettes(void) {
 	u16 palette[] = {0, 0xFBDE, 0xBDEF, // Light
 					 0, 0xD294, 0xA529, // Darker
 					 0, (u16)(palettes[PersonalData->theme][0] & 0xFBDE), (u16)(palettes[PersonalData->theme][0] & 0xBDEF), // Light colored

@@ -671,6 +671,7 @@ int main()
 	vramSetBankH(VRAM_H_SUB_BG);
 
 	loadFont();
+	loadPalettes();
 
 	// consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 2, 0, false, true);
 	//if(nitroFSInit(NULL))
