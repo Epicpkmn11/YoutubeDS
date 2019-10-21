@@ -9,6 +9,8 @@
 
 #include "graphics.h"
 
+#include "fileBrowseBg.h"
+
 #define SCREEN_COLS 22
 #define ENTRIES_PER_SCREEN 11
 #define ENTRIES_START_ROW 1
@@ -123,16 +125,13 @@ void showDirectoryContents(const std::vector<DirEntry>& dirContents, const std::
 	getcwd(path, PATH_MAX);
 
 	// Print path
-	// drawImageFromSheet(0, 0, fileBrowseBgData.width, 17, fileBrowseBg, fileBrowseBgData.width, 0, 0, false);
-	drawRectangle(0, 0, 256, 16, 0, false);
-	drawRectangle(0, 15, 256, 1, 2, false);
+	drawImageSection(0, 0, 256, 17, fileBrowseBgBitmap, 256, 0, 0, 16);
 	printTextMaxW(path, 250, 1, 0, 5, 0, false);
 
 	// Print directory listing
 	for(int i=0;i < ENTRIES_PER_SCREEN; i++) {
 		// Clear row
-		// drawImageFromSheet(10, i*16+16, 246, 16, fileBrowseBg, fileBrowseBgData.width, 10, i*16+16, false);
-		drawRectangle(10, i*16+16, 246, 16, 0, false);
+		drawImageSection(10, i*16+16, 246, 16, fileBrowseBgBitmap, 256, 10, i*16+16, 16);
 
 		if(i < ((int)dirContents.size() - startRow)) {
 			std::u16string name = UTF8toUTF16(dirContents[startRow+i].name);
@@ -164,6 +163,8 @@ std::string browseForFile(const std::vector<std::string>& extensionList) {
 	touchPosition touch;
 	std::vector<DirEntry> dirContents;
 	std::vector<std::string> watchedList = watchedListGet();
+
+	drawImage(0, 0, 256, 192, fileBrowseBgBitmap, 16);
 
 	getDirectoryContents(dirContents, extensionList);
 	showDirectoryContents(dirContents, watchedList, fileOffset, screenOffset);

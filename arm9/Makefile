@@ -18,6 +18,7 @@ BUILD		:=	build
 SOURCES		:=	source source/aac source/aac/asm/armgcc source/happyhttp source/gui source/mpeg4
 INCLUDES	:=	include source source/aac source/aac_pub source/happyhttp source/rapidjson source/jpeg source/gui source/mpeg4 ../common
 DATA		:=	data
+GRAPHICS	:=  gfx
 
 
 #---------------------------------------------------------------------------------
@@ -59,12 +60,14 @@ export ARM9ELF	:=	$(CURDIR)/$(TARGET).elf
 export DEPSDIR := $(CURDIR)/$(BUILD)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
+					$(foreach dir,$(GRAPHICS),$(CURDIR)/$(dir))
  
+BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+PNGFILES	:=	$(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.png)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
  
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -81,7 +84,7 @@ endif
 #---------------------------------------------------------------------------------
 
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+					$(PNGFILES:.png=.o) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
  
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
@@ -120,6 +123,16 @@ $(ARM9ELF)	:	$(OFILES)
 	@echo $(notdir $<)
 	@$(bin2o)
 	arm-none-eabi-objcopy --rename-section .rodata=.vram $(@)
+
+#---------------------------------------------------------------------------------
+# This rule creates assembly source files using grit
+# grit takes an image file and a .grit describing how the file is to be processed
+# add additional rules like this for each image extension
+# you use in the graphics folders 
+#---------------------------------------------------------------------------------
+%.s %.h   : %.png %.grit
+#---------------------------------------------------------------------------------
+	grit $< -fts -o$*
 
 -include $(DEPSDIR)/*.d
  

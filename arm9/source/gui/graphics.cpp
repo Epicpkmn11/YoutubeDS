@@ -1,7 +1,10 @@
 #include "graphics.h"
 #include <stdio.h>
 
+#include "tonccpy.h"
+
 #include "font_nftr.h"
+#include "fileBrowseBg.h"
 
 std::vector<u8> fontTiles;
 std::vector<u8> fontWidths;
@@ -19,10 +22,12 @@ void initGraphics(void) {
 	bgInitSub(3, BgType_Bmp8, BgSize_B8_256x256, 0, 0);
 
 	u16 palette[] = {0, 0xFBDE, 0xBDEF, // Light
-						0xD294, 0xA529, // Darker
-						0xCA5F & 0xFBDE, 0xCA5F & 0xBDEF, // Light Red
-						0xCA5F & 0xD294, 0xCA5F & 0xA529}; // Darker Red
-	memcpy(BG_PALETTE_SUB, &palette, sizeof(palette));
+					 0, 0xD294, 0xA529, // Darker
+					 0, (u16)(palettes[PersonalData->theme][0] & 0xFBDE), (u16)(palettes[PersonalData->theme][0] & 0xBDEF), // Light colored
+					 0, (u16)(palettes[PersonalData->theme][0] & 0xD294), (u16)(palettes[PersonalData->theme][0] & 0xA529)}; // Darker colored
+	tonccpy(BG_PALETTE_SUB, &palette, sizeof(palette));
+	tonccpy(BG_PALETTE_SUB+0x10, &fileBrowseBgPal, fileBrowseBgPalLen/2);
+	tonccpy(BG_PALETTE_SUB+0x13, &palettes[PersonalData->theme], sizeof(palettes[PersonalData->theme]));
 }
 
 void loadFont(void) {
@@ -96,26 +101,37 @@ void loadFont(void) {
 	}
 }
 
-void drawImage(int x, int y, int w, int h, std::vector<u8> &imageBuffer, bool top) {
-	u8* dst = (u8*)(top ? BG_GFX : BG_GFX_SUB);
+void drawImage(int x, int y, int w, int h, const unsigned char *imageBuffer, int startPal) {
+	u8* dst = (u8*)BG_GFX_SUB;
 	for(int i=0;i<h;i++) {
 		for(int j=0;j<w;j++) {
-			if(imageBuffer[(i*w)+j] != 0) { // Do not render palette 0
-				dst[(y+i)*256+j+x] = imageBuffer[(i*w)+j];
+			if(BG_PALETTE_SUB[imageBuffer[(i*w)+j]+startPal] != 0) { // Do not render black
+				dst[(y+i)*256+j+x] = imageBuffer[(i*w)+j]+startPal;
 			}
 		}
 	}
 }
 
-void drawImageScaled(int x, int y, int w, int h, double scaleX, double scaleY, std::vector<u8> &imageBuffer, bool top) {
-	if(scaleX == 1 && scaleY == 1)	drawImage(x, y, w, h, imageBuffer, top);
+void drawImageScaled(int x, int y, int w, int h, double scaleX, double scaleY, const unsigned char *imageBuffer, int startPal) {
+	if(scaleX == 1 && scaleY == 1)	drawImage(x, y, w, h, imageBuffer, startPal);
 	else {
-		u8* dst = (u8*)(top ? BG_GFX : BG_GFX_SUB);
+		u8* dst = (u8*)BG_GFX_SUB;
 		for(int i=0;i<(h*scaleY);i++) {
 			for(int j=0;j<(w*scaleX);j++) {
-				if(imageBuffer[(((int)(i/scaleY))*w)+(j/scaleX)]>>15 != 0) { // Do not render transparent pixel
-					dst[(y+i)*256+x+j] = imageBuffer[(((int)(i/scaleY))*w)+(j/scaleX)];
+				if(BG_PALETTE_SUB[imageBuffer[(int)((((int)(i/scaleY))*w)+(j/scaleX))]+startPal] != 0) { // Do not render black
+					dst[(y+i)*256+x+j] = imageBuffer[(int)((((int)(i/scaleY))*w)+(j/scaleX))]+startPal;
 				}
+			}
+		}
+	}
+}
+
+void drawImageSection(int x, int y, int w, int h, const unsigned char *imageBuffer, int imageWidth, int xOffset, int yOffset, int startPal) {
+	u8* dst = (u8*)BG_GFX_SUB;
+	for(int i=0;i<h;i++) {
+		for(int j=0;j<w;j++) {
+			if(BG_PALETTE_SUB[imageBuffer[((i+yOffset)*imageWidth)+j+xOffset]+startPal] != 0) { // Do not render black
+				dst[((y+i)*256)+j+x] = imageBuffer[((i+yOffset)*imageWidth)+j+xOffset]+startPal;
 			}
 		}
 	}
@@ -193,22 +209,12 @@ void printText(std::u16string text, double scaleX, double scaleY, int palette, i
 		}
 
 		int t = getCharIndex(text[c]);
-		std::vector<u8> image;
+		unsigned char image[tileSize * 4];
 		for(int i=0;i<tileSize;i++) {
-			image.push_back(fontTiles[i+(t*tileSize)]>>6 & 3);
-			image.push_back(fontTiles[i+(t*tileSize)]>>4 & 3);
-			image.push_back(fontTiles[i+(t*tileSize)]>>2 & 3);
-			image.push_back(fontTiles[i+(t*tileSize)]    & 3);
-		}
-
-		if(palette) {
-			for(unsigned int i=0;i<image.size();i++) {
-				if(image[i] != 0) {
-					if(palette) {
-						image[i] += palette*2;
-					}
-				}
-			}
+			image[(i*4)]   = (palette*3 + (fontTiles[i+(t*tileSize)]>>6 & 3));
+			image[(i*4)+1] = (palette*3 + (fontTiles[i+(t*tileSize)]>>4 & 3));
+			image[(i*4)+2] = (palette*3 + (fontTiles[i+(t*tileSize)]>>2 & 3));
+			image[(i*4)+3] = (palette*3 + (fontTiles[i+(t*tileSize)]    & 3));
 		}
 
 		x += fontWidths[t*3];
@@ -218,6 +224,23 @@ void printText(std::u16string text, double scaleX, double scaleY, int palette, i
 		}
 		drawImageScaled(x, yPos, tileWidth, tileHeight, scaleX, scaleY, image, top);
 		x += fontWidths[(t*3)+1]*scaleX;
+	}
+}
+
+void printTextQuick(std::string text, int palette, int xPos, int yPos) {
+	for(unsigned c=0;c<text.size();c++) {
+		int t = getCharIndex(text[c]);
+		unsigned char image [tileSize * 4];
+		for(int i=0;i<tileSize*4;i+=4) {
+			image[i]   = (palette*3 + (fontTiles[i+(t*tileSize)]>>6 & 3));
+			image[i+1] = (palette*3 + (fontTiles[i+(t*tileSize)]>>4 & 3));
+			image[i+2] = (palette*3 + (fontTiles[i+(t*tileSize)]>>2 & 3));
+			image[i+3] = (palette*3 + (fontTiles[i+(t*tileSize)]    & 3));
+		}
+
+		xPos += fontWidths[t*3];
+		drawImage(xPos, yPos, tileWidth, tileHeight, image, false);
+		xPos += fontWidths[(t*3)+1];
 	}
 }
 
