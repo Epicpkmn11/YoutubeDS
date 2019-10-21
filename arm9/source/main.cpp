@@ -188,10 +188,10 @@ ITCM_CODE void PlayVideo()
 
 	// Clear the screen
 	printf("\x1b[2J");
-	drawRectangle(0, 0, 256, 192, 0, false);
+	drawRectangle(0, 0, 256, 192, 0);
 
 	// Draw progress bar background
-	drawRectangle(35, 6, 185, 7, 5, false);
+	drawRectangle(35, 6, 185, 7, 5);
 
 	printf("Opened file: %p\n", video);
 	//find the moov atom
@@ -289,8 +289,8 @@ ITCM_CODE void PlayVideo()
 					nrframes = READ_SAFE_UINT32_BE(ptr);
 					char time[14];
 					snprintf(time, sizeof(time), "%.02ld:%.02ld", nrframes/(timescale/1000)/60, (nrframes/(timescale/1000))-((nrframes/(timescale/1000)/60)*60));
-					drawRectangle(223, 1, 33, 16, 0, false);
-					printText(time, 1, 1, 1, 223, 1, false);
+					drawRectangle(223, 1, 33, 16, 0);
+					printText(time, 1, 1, 1, 223, 1);
 					ptr += 4;
 					framesizes = ptr;
 					ptr += nrframes * 4;
@@ -465,11 +465,11 @@ ITCM_CODE void PlayVideo()
 		mpeg4DecStruct.pPrevUV = mpeg4DecStruct.pDstUV;
 		mpeg4DecStruct.pDstY = &mYBuffer[lastQueueBlock][0];
 		mpeg4DecStruct.pDstUV = &mUVBuffer[lastQueueBlock][0];
-		for(uint q = 0; q < sizeof(mYDCCoefCache) / sizeof(mYDCCoefCache[0]); q++)
+		for(unsigned int q = 0; q < sizeof(mYDCCoefCache) / sizeof(mYDCCoefCache[0]); q++)
 			mYDCCoefCache[q] = 1024;
-		for(uint q = 0; q < sizeof(mUVDCCoefCache) / sizeof(mUVDCCoefCache[0]); q++)
+		for(unsigned int q = 0; q < sizeof(mUVDCCoefCache) / sizeof(mUVDCCoefCache[0]); q++)
 			mUVDCCoefCache[q] = 1024;
-		for(uint q = 0; q < sizeof(mMVecCache) / sizeof(mMVecCache[0]); q++)
+		for(unsigned int q = 0; q < sizeof(mMVecCache) / sizeof(mMVecCache[0]); q++)
 			mMVecCache[q] = 0;
 		if(mpeg4DecStruct.pData[2] == 1 && mpeg4DecStruct.pData[3] == 0xB3)
 			mpeg4DecStruct.pData += 7;
@@ -582,14 +582,8 @@ ITCM_CODE void VBlankProc()
 {	
 	if(isVideoPlaying)//stride dma and frame copy
 	{
-		if(!pauseVideo) {
-			// Update time & progress
-			drawRectangle(36, 7, (int)(((float)frame/nrframes)*184), 5, 4, false);
-			char time[14];
-			snprintf(time, sizeof(time), "%.02d:%.02d", frame/(mTimeScale/1000)/60, (frame/(mTimeScale/1000))-((frame/(mTimeScale/1000)/60)*60));
-			drawRectangle(3, 1, 30, 16, 0, false);
-			printText(time, 1, 1, 1, 3, 1, false);
-
+		if(!pauseVideo)
+		{
 			if(mCopyDone)
 			{
 				mCopyDone = false;
@@ -629,12 +623,19 @@ ITCM_CODE void VBlankProc()
 				}
 				else
 				{
-					iprintf("Skip\n");
+					printf("Skip\n");
 					//dmaFillWords(0x801F801F, (void*)&BG_GFX[0], FRAME_SIZE * 2);
 				}
 				curBlock = firstQueueBlock;
 				firstQueueBlock = (firstQueueBlock + 1) % NR_FRAME_BLOCKS;
 				nrFramesInQueue--;
+			} else {
+				// Update time & progress if not copying a frame
+				drawRectangle(36, 7, (int)(((float)frame/nrframes)*184), 5, 4);
+				char time[14];
+				snprintf(time, sizeof(time), "%.02d:%.02d", frame/(mTimeScale/1000)/60, (frame/(mTimeScale/1000))-((frame/(mTimeScale/1000)/60)*60));
+				drawRectangle(3, 1, 30, 16, 0);
+				printText(time, 1, 1, 1, 3, 1);
 			}
 		}
 

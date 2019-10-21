@@ -51,7 +51,7 @@ void getDirectoryContents(std::vector<DirEntry>& dirContents, const std::vector<
 	DIR *pdir = opendir(".");
 
 	if(pdir == NULL) {
-		printText("Unable to open the directory.", 1, 1, 0, 0, 0, false);
+		printText("Unable to open the directory.", 1, 1, 0, 0, 0);
 	} else {
 		while(true) {
 			DirEntry dirEntry;
@@ -126,7 +126,7 @@ void showDirectoryContents(const std::vector<DirEntry>& dirContents, const std::
 
 	// Print path
 	drawImageSection(0, 0, 256, 17, fileBrowseBgBitmap, 256, 0, 0, 16);
-	printTextMaxW(path, 250, 1, 0, 5, 0, false);
+	printTextMaxW(path, 250, 1, 0, 5, 0);
 
 	// Print directory listing
 	for(int i=0;i < ENTRIES_PER_SCREEN; i++) {
@@ -152,7 +152,7 @@ void showDirectoryContents(const std::vector<DirEntry>& dirContents, const std::
 				}
 			}
 
-			printText(name, 1, 1, !(startRow+i == selection) + (watched*2), 10, i*16+16, false, true);
+			printText(name, 1, 1, !(startRow+i == selection) + (watched*2), 10, i*16+16);
 		}
 	}
 }
@@ -210,16 +210,13 @@ std::string browseForFile(const std::vector<std::string>& extensionList) {
 			}
 		} else if(pressed & KEY_B) {
 			// Go up a directory
-			if((strcmp (path, "sd:/") == 0) || (strcmp (path, "fat:/") == 0)) {
-				// std::string str = topMenuSelect();
-				// if(str != "")	return str;
-			} else {
+			if(!((strcmp (path, "sd:/") == 0) || (strcmp (path, "fat:/") == 0))) {
 				chdir("..");
+				getDirectoryContents(dirContents, extensionList);
+				screenOffset = 0;
+				fileOffset = 0;
+				watchedList = watchedListGet();
 			}
-			getDirectoryContents(dirContents, extensionList);
-			screenOffset = 0;
-			fileOffset = 0;
-			watchedList = watchedListGet();
 		} else if(pressed & KEY_Y) {
 			DirEntry* entry = &dirContents.at(fileOffset);
 			if(!entry->isDirectory) {

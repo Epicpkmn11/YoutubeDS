@@ -29,20 +29,20 @@ void loadFont(void);
 
 void drawImage(int x, int y, int w, int h, const unsigned char *imageBuffer, int startPal = 0);
 void drawImageScaled(int x, int y, int w, int h, double scaleX, double scaleY, const unsigned char *imageBuffer, int startPal = 0);
-void drawImageSection(int x, int y, int w, int h, const unsigned char *imageBuffer, int imageWidth, int xOffset, int yOffset, int startPal);
-void drawRectangle(int x, int y, int w, int h, u8 color, bool top);
+void drawImageSection(int x, int y, int w, int h, const unsigned char *imageBuffer, int imageWidth, int xOffset, int yOffset, int startPal = 0);
+void drawRectangle(int x, int y, int w, int h, u8 color);
 
 std::u16string UTF8toUTF16(const std::string &src);
 int getCharIndex(char16_t c);
 
-void printTextCenteredMaxW(std::string text, double w, double scaleY, int palette, int xOffset, int yPos, bool top, bool invert = false);
-void printTextCenteredMaxW(std::u16string text, double w, double scaleY, int palette, int xOffset, int yPos, bool top, bool invert = false);
-void printTextCentered(std::string text, double scaleX, double scaleY, int palette, int xOffset, int yPos, bool top, bool invert = false);
-void printTextCentered(std::u16string text, double scaleX, double scaleY, int palette, int xOffset, int yPos, bool top, bool invert = false);
-void printTextMaxW(std::string text, double w, double scaleY, int palette, int xPos, int yPos, bool top, bool invert = false);
-void printTextMaxW(std::u16string text, double w,  double scaleY, int palette, int xPos, int yPos, bool top, bool invert = false);
-void printText(std::string text, double scaleX, double scaleY, int palette, int xPos, int yPos, bool top, bool invert = false);
-void printText(std::u16string text, double scaleX, double scaleY, int palette, int xPos, int yPos, bool top, bool invert = false);
+void printTextCenteredMaxW(std::string text, double w, double scaleY, int palette, int xOffset, int yPos);
+void printTextCenteredMaxW(std::u16string text, double w, double scaleY, int palette, int xOffset, int yPos);
+void printTextCentered(std::string text, double scaleX, double scaleY, int palette, int xOffset, int yPos);
+void printTextCentered(std::u16string text, double scaleX, double scaleY, int palette, int xOffset, int yPos);
+void printTextMaxW(std::string text, double w, double scaleY, int palette, int xPos, int yPos);
+void printTextMaxW(std::u16string text, double w,  double scaleY, int palette, int xPos, int yPos);
+void printText(std::string text, double scaleX, double scaleY, int palette, int xPos, int yPos);
+void printText(std::u16string text, double scaleX, double scaleY, int palette, int xPos, int yPos);
 
 int getTextWidthMaxW(std::string text, int w);
 int getTextWidthMaxW(std::u16string text, int w);

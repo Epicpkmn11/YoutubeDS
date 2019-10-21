@@ -128,8 +128,8 @@ void drawImageSection(int x, int y, int w, int h, const unsigned char *imageBuff
 	}
 }
 
-void drawRectangle(int x, int y, int w, int h, u8 color, bool top) {
-	u8* dst = (u8*)(top ? BG_GFX : BG_GFX_SUB);
+void drawRectangle(int x, int y, int w, int h, u8 color) {
+	u8* dst = (u8*)BG_GFX_SUB;
 	for(int i=0;i<h;i++) {
 		for(int j=0;j<w;j++) {
 			dst[(y+i)*256+j+x] = color;
@@ -183,14 +183,14 @@ int getCharIndex(char16_t c) {
 	return spriteIndex;
 }
 
-void printTextCenteredMaxW(std::string text, double w, double scaleY, int palette, int xOffset, int yPos, bool top, bool invert) { printText(UTF8toUTF16(text), std::min(1.0, w/getTextWidth(text)), scaleY, palette, ((256-getTextWidthMaxW(text, w))/2)+xOffset, yPos, top, invert); }
-void printTextCenteredMaxW(std::u16string text, double w, double scaleY, int palette, int xOffset, int yPos, bool top, bool invert) { printText(text, std::min(1.0, w/getTextWidth(text)), scaleY, palette, ((256-getTextWidthMaxW(text, w))/2)+xOffset, yPos, top, invert); }
-void printTextCentered(std::string text, double scaleX, double scaleY, int palette, int xOffset, int yPos, bool top, bool invert) { printText(UTF8toUTF16(text), scaleX, scaleY, palette, ((256-getTextWidth(text))/2)+xOffset, yPos, top, invert); }
-void printTextCentered(std::u16string text, double scaleX, double scaleY, int palette, int xOffset, int yPos, bool top, bool invert) { printText(text, scaleX, scaleY, palette, ((256-getTextWidth(text))/2)+xOffset, yPos, top, invert); }
-void printTextMaxW(std::string text, double w, double scaleY, int palette, int xPos, int yPos, bool top, bool invert) { printText(UTF8toUTF16(text), std::min(1.0, w/getTextWidth(text)), scaleY, palette, xPos, yPos, top, invert); }
-void printTextMaxW(std::u16string text, double w,  double scaleY, int palette, int xPos, int yPos, bool top, bool invert) { printText(text, std::min(1.0, w/getTextWidth(text)), scaleY, palette, xPos, yPos, top, invert); }
-void printText(std::string text, double scaleX, double scaleY, int palette, int xPos, int yPos, bool top, bool invert) { printText(UTF8toUTF16(text), scaleX, scaleY, palette, xPos, yPos, top, invert); }
-void printText(std::u16string text, double scaleX, double scaleY, int palette, int xPos, int yPos, bool top, bool invert) {
+void printTextCenteredMaxW(std::string text, double w, double scaleY, int palette, int xOffset, int yPos) { printText(UTF8toUTF16(text), std::min(1.0, w/getTextWidth(text)), scaleY, palette, ((256-getTextWidthMaxW(text, w))/2)+xOffset, yPos); }
+void printTextCenteredMaxW(std::u16string text, double w, double scaleY, int palette, int xOffset, int yPos) { printText(text, std::min(1.0, w/getTextWidth(text)), scaleY, palette, ((256-getTextWidthMaxW(text, w))/2)+xOffset, yPos); }
+void printTextCentered(std::string text, double scaleX, double scaleY, int palette, int xOffset, int yPos) { printText(UTF8toUTF16(text), scaleX, scaleY, palette, ((256-getTextWidth(text))/2)+xOffset, yPos); }
+void printTextCentered(std::u16string text, double scaleX, double scaleY, int palette, int xOffset, int yPos) { printText(text, scaleX, scaleY, palette, ((256-getTextWidth(text))/2)+xOffset, yPos); }
+void printTextMaxW(std::string text, double w, double scaleY, int palette, int xPos, int yPos) { printText(UTF8toUTF16(text), std::min(1.0, w/getTextWidth(text)), scaleY, palette, xPos, yPos); }
+void printTextMaxW(std::u16string text, double w,  double scaleY, int palette, int xPos, int yPos) { printText(text, std::min(1.0, w/getTextWidth(text)), scaleY, palette, xPos, yPos); }
+void printText(std::string text, double scaleX, double scaleY, int palette, int xPos, int yPos) { printText(UTF8toUTF16(text), scaleX, scaleY, palette, xPos, yPos); }
+void printText(std::u16string text, double scaleX, double scaleY, int palette, int xPos, int yPos) {
 	int x=xPos;
 	for(unsigned c=0;c<text.size();c++) {
 		if(text[c] == 0x00BB) { // » makes a new line currently, may change this
@@ -213,25 +213,8 @@ void printText(std::u16string text, double scaleX, double scaleY, int palette, i
 			x = xPos+fontWidths[t*3];
 			yPos += tileHeight;
 		}
-		drawImageScaled(x, yPos, tileWidth, tileHeight, scaleX, scaleY, image, top);
+		drawImageScaled(x, yPos, tileWidth, tileHeight, scaleX, scaleY, image);
 		x += fontWidths[(t*3)+1]*scaleX;
-	}
-}
-
-void printTextQuick(std::string text, int palette, int xPos, int yPos) {
-	for(unsigned c=0;c<text.size();c++) {
-		int t = getCharIndex(text[c]);
-		unsigned char image [tileSize * 4];
-		for(int i=0;i<tileSize*4;i+=4) {
-			image[i]   = (palette*3 + (fontTiles[i+(t*tileSize)]>>6 & 3));
-			image[i+1] = (palette*3 + (fontTiles[i+(t*tileSize)]>>4 & 3));
-			image[i+2] = (palette*3 + (fontTiles[i+(t*tileSize)]>>2 & 3));
-			image[i+3] = (palette*3 + (fontTiles[i+(t*tileSize)]    & 3));
-		}
-
-		xPos += fontWidths[t*3];
-		drawImage(xPos, yPos, tileWidth, tileHeight, image, false);
-		xPos += fontWidths[(t*3)+1];
 	}
 }
 
