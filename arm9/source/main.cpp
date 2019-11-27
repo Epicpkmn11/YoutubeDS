@@ -85,6 +85,8 @@ static int mDoubleSpeedEnabled = 0;
 
 static int nrframes, frame;
 
+static volatile int skip = 0;
+
 #define FRAME_SIZE	(256 * 192)//(176 * 144)
 //static uint16_t mFrameQueue[FRAME_SIZE * NR_FRAME_BLOCKS] __attribute__ ((aligned (32)));
 
@@ -397,8 +399,24 @@ ITCM_CODE void PlayVideo()
 	pauseVideo = false;
 	while((!stopVideo || frame < 20) && frame < nrframes)
 	{
+		if(skip)
+		{
+			if(frame+skip > 0)
+			{
+				videoBlockOffsets += 4*skip;
+				audioBlockOffsets += 4*skip;
+				framesizes += 4*skip;
+				nextAudioBlockOffset = READ_SAFE_UINT32_BE(audioBlockOffsets-4);
+				offset = READ_SAFE_UINT32_BE(videoBlockOffsets);
+				fseek(video, nextAudioBlockOffset, SEEK_SET);
+				frame += skip;
+			}
+			skip = 0;
+			continue;
+		}
+		
 		if(pauseVideo)	continue;
-		if(frame < nrframes && offset == nextAudioBlockOffset)
+		if(frame < nrframes)
 		{
 			offset = READ_SAFE_UINT32_BE(videoBlockOffsets);
 			int audiosize = offset - nextAudioBlockOffset;
@@ -641,6 +659,7 @@ ITCM_CODE void VBlankProc()
 
 		scanKeys();
 		u16 pressed = keysDown();
+		u16 held = keysDownRepeat();
 		if(pressed & KEY_A) {
 			pauseVideo = !pauseVideo;
 			// if(pauseVideo)
@@ -650,6 +669,21 @@ ITCM_CODE void VBlankProc()
 			// }
 		} else if(pressed & KEY_B) {
 			stopVideo = true;
+		} else if(held & KEY_RIGHT) {
+			skip = 24*5;
+		} else if(held & KEY_LEFT) {
+			skip = -24*5;
+			drawBar:
+			drawRectangle(35, 6, 185, 7, 5);
+			drawRectangle(36, 7, (int)(((float)frame/nrframes)*184), 5, 4);
+		} else if(held & KEY_TOUCH) {
+			touchPosition touch;
+			touchRead(&touch);
+			if(touch.py < 16 && touch.px > 35 && touch.px < 220) {
+				int newpos = nrframes*((float)(touch.px-35)/183);
+				skip = newpos-frame;
+				goto drawBar; // overflowed itcm with it copied 
+			}
 		}
 	}
 	else
